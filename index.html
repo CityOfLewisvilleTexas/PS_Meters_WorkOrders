@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <title>STW Work Orders</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+      crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+      crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+      crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="https://unpkg.com/vue"></script>
+
+    <!-- Date-picker itself -->
+    <script src="https://unpkg.com/eonasdan-bootstrap-datetimepicker@4.17.47/build/js/bootstrap-datetimepicker.min.js"></script>
+    <link href="https://unpkg.com/eonasdan-bootstrap-datetimepicker@4.17.47/build/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+
+    <script src="https://unpkg.com/vue-bootstrap-datetimepicker"></script>
+    <script>
+      // Initialize as global component
+      Vue.component('date-picker', VueBootstrapDatetimePicker.default);
+    </script>
+    <style type="text/css">
+      html {
+        height: 100%;
+      }
+
+      body {
+        font-size: 1em !important;
+      }
+
+      modal {
+        font-size: 1em !important;
+      }
+
+      .table-responsive {
+        -webkit-overflow-scrolling: touch !important;
+        width: 1px;
+        min-width: 100%;
+        *width: 100%;
+      }
+
+      .table-responsive .table {
+        max-width: none;
+      }
+
+      .lg-text-size {
+        font-size: 1em !important;
+      }
+
+      .loader {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 16px solid #f3f3f3;
+        /* Light grey */
+        border-top: 16px solid #3498db;
+        /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .modal-mask {
+        position: fixed;
+        z-index: 9998;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, .5);
+        display: table;
+        transition: opacity .3s ease;
+      }
+
+      .modal-wrapper {
+        display: table-cell;
+        vertical-align: middle;
+      }
+
+      .modal-container {
+        width: 75vw;
+        margin: 0px auto;
+        padding: 20px 30px;
+        background-color: #fff;
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .33);
+        transition: all .3s ease;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 1em;
+      }
+
+      .modal-container-user {
+        width: 40%;
+        margin: 0px auto;
+        padding: 20px 30px;
+        background-color: #fff;
+        border-radius: 2px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .33);
+        transition: all .3s ease;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+
+      .modal-header h3 {
+        margin-top: 0;
+        color: #42b983;
+      }
+
+      .modal-body {
+        margin: 20px 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: 50%;
+        max-height: 50vh;
+      }
+
+      .overflow {
+        overflow-y: scroll !important;
+      }
+
+      .modal-body-users {
+        margin: 20px auto !important;
+      }
+
+      .modal-default-button {
+        float: right;
+      }
+
+      /*
+        * The following styles are auto-applied to elements with
+        * transition="modal" when their visibility is toggled
+        * by Vue.js.
+        *
+        * You can easily play with the modal transition by editing
+        * these styles.
+        */
+
+      .modal-enter {
+        opacity: 0;
+      }
+
+      .modal-leave-active {
+        opacity: 0;
+      }
+
+      .modal-enter .modal-container,
+      .modal-leave-active .modal-container {
+        -webkit-transform: scale(1.1);
+        transform: scale(1.1);
+      }
+
+      .scrollable {
+        overflow-y: auto;
+        max-height: 35%;
+        max-height: 35vh;
+      }
+
+      @media (max-width: 480px) {
+        body {
+          font-size: 0.9em !important;
+        }
+        modal {
+          font-size: 0.9em !important;
+        }
+        .modal-container {
+          width: 90%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+
+      <div v-if="loading" class="loader"></div>
+
+      <div class="p-3 mb-2 bg-primary text-white" v-if="!loading">Work Orders Assigned to {{ user.split("@")[0] }}</div>
+
+      <modal v-if="showModal" @close="showModal = false" @save="save()">
+        <!--
+                you can use custom content here to overwrite
+                default content
+              -->
+        <h3 slot="header" style="display: block;">Work Order: {{ selectedRow.values[0][0] }}</h3>
+        <div slot="body">
+          <div class="row">
+            <div class="col-lg-6" style="white-space: nowrap;">
+              <b>Account Number</b>
+            </div>
+            <div class="col-lg-6" style="white-space: nowrap;">
+              {{ selectedRow.values[0][1] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Address</b>
+            </div>
+            <div class="col-lg-6" style="white-space: nowrap;">
+              {{ selectedRow.values[0][3] }}, {{ selectedRow.values[0][7] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Date Issued</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][8] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Date to Perform Service</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][9] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Service Type</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][5] }} - {{ selectedRow.values[0][6] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Instructions</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][11] }}
+            </div>
+          </div>
+        </div>
+
+        <div slot="body">
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Meter Number</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][2] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Meter Mfr</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][4] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Meter Size</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][23] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Meter In Service</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][19] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Location Code</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][26] }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <b>Digits to Read</b>
+            </div>
+            <div class="col-lg-6">
+              {{ selectedRow.values[0][20] }}
+            </div>
+          </div>
+        </div>
+
+        <form slot="subbody">
+          <div class="form-group">
+            <label for="meterReading">Meter Reading <span v-if="selectedRow.values[0][15]">{{selectedRow.values[0][15]}}</span></label>
+            <input type="text" class="form-control input-lg lg-text-size" v-bind:class="invalidClass" id="meterReading" v-model="selectedRow.values[0][13]">
+            <div v-bind:class="invalidClass">
+              {{ selectedRow.values[0][20] }} digits need to be recorded.
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="comments">Comments</label>
+            <input type="text" class="form-control input-lg lg-text-size" id="comments" v-model="selectedRow.values[0][18]">
+          </div>
+        </form>
+      </modal>
+
+      <div class="table-responsive">
+        <table v-if="!loading" class="table table-bordered table-hover table-striped table-sm table-fixed">
+          <head>
+            <tr>
+              <th v-for="cell in workorders[0].values[0]" style="white-space: nowrap; padding: 10px;">{{ cell }}</th>
+            </tr>
+          </head>
+          <tbody>
+            <tr style="cursor: pointer;" v-for="row in workorders.slice(1)" @click="showForm(row)">
+              <td v-for="cell in row.values[0]" style="white-space: nowrap;">{{ cell }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-responsive">
+        <table v-if="!loading && completed_workorders.length > 1" class="table table-bordered table-hover table-sm table-striped table-fixed">
+          <head>
+            <tr>
+              <th colspan="20">Completed Workorders</th>
+            </tr>
+            <tr>
+              <th v-for="cell in completed_workorders[0].values[0]" style="white-space: nowrap; padding: 10px;">{{ cell }}</th>
+            </tr>
+          </head>
+          <tbody>
+            <tr style="cursor: pointer;" v-for="row in completed_workorders.slice(1)" @click="showForm(row)">
+              <td v-for="cell in row.values[0]" style="white-space: nowrap;">{{ cell }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- template for the modal component -->
+    <script type="text/x-template" id="modal-template">
+      <transition name="modal">
+        <div class="modal-mask">
+          <div class="modal-wrapper" @click="$emit('close')">
+            <div class="modal-container" @click.stop>
+
+              <div class="modal-header">
+                <slot name="header">
+                </slot>
+              </div>
+              
+              <div class="modal-body">
+                <slot name="body" class="scrollable">
+                  
+                </slot>
+                <hr />
+                
+                <slot name="subbody">
+                </slot>
+              </div>
+
+              <div class="modal-footer">
+                
+                <slot name="footer">
+                  <button class="modal-default-button btn btn-warning" @click="$emit('close')">
+                    Cancel
+                  </button>
+                  <button class="modal-default-button btn btn-primary" @click="$emit('save')">
+                    Save
+                  </button>
+                </slot>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </script>
+
+    <script type="text/javascript">
+      // register modal component
+      Vue.component('modal', {
+        template: '#modal-template'
+      });
+
+      Vue.component('user-modal', {
+        template: '#user-modal-template'
+      });
+
+      var app = new Vue({
+        el: '#app',
+        data: {
+          workorders: [],
+          completed_workorders: [],
+          isAuthenticated: false,
+          user: {
+            name: 'COL Employee 1',
+            email: ''
+          },
+          loading: true,
+          data: [],
+          showModal: false,
+          showUserModal: true,
+          selectedRow: [],
+          copyOfRow: [],
+          rowIndex: '',
+          config: {
+            // https://momentjs.com/docs/#/displaying/
+            format: 'MM/DD/YYYY',
+            useCurrent: false,
+            showClear: true,
+            showClose: true,
+          },
+          invalidForm: false,
+          invalidClass: { 'is-invalid': false }
+        },
+        created: function () {
+          this.getUser();
+          this.startInterval();
+        },
+        mounted: function () {
+
+        },
+        methods: {
+          formatDateTime: function (workorders) {
+            var self = this;
+            workorders.forEach(function (workorder, index) {
+              if (index > 0) {
+                workorder.values[0][19] = workorder.values[0][19].replace('T', ' ').replace('Z', '');
+
+                workorder.values[0][8] = moment(workorder.values[0][8]).format('MM/DD/YY HH:mm');
+                workorder.values[0][9] = moment(workorder.values[0][9]).format('MM/DD/YY HH:mm');
+
+                workorder.values[0][14] = moment(workorder.values[0][14]).isValid() ? moment(workorder.values[0][14]).format('MM/DD/YY') : '';
+                workorder.values[0][15] = moment(workorder.values[0][16]).isValid() ? moment(workorder.values[0][16]).format('MM/DD/YY') : '';
+                workorder.values[0][19] = moment(workorder.values[0][19]).isValid() ? moment(workorder.values[0][19]).format('MM/DD/YY') : '';
+              }
+            });
+          },
+          startInterval: function () {
+            const self = this;
+
+            setInterval(function () {
+              console.log('Updating..');
+              self.getRows();
+              self.getCompletedRows();
+            }, (1000 * 60 * 1)); // updates every minute
+          },
+          compare: function (a, b) {
+            if (a.values[0][9] < b.values[0][9])
+              return -1;
+            if (a.values[0][9] > b.values[0][9])
+              return 1;
+            return 0;
+          },
+          getRows: function () {
+            var self = this;
+            google.script.run.withSuccessHandler(function (data) {
+              //console.log(data);
+              self.data = JSON.parse(data);
+              self.workorders = JSON.parse(data);
+              var header = self.data.splice(0, 1);
+
+              self.workorders = self.workorders.slice(1).sort(self.compare);
+              self.workorders.unshift(header[0]);
+              console.log(self.workorders);
+
+              self.formatDateTime(self.workorders);
+              self.loading = false;
+            }).selectRows(self.user);
+          },
+          getCompletedRows: function () {
+            var self = this;
+            google.script.run.withSuccessHandler(function (data) {
+              //console.log(data);
+              self.completed_workorders = JSON.parse(data);
+
+              self.formatDateTime(self.completed_workorders);
+
+              self.loading = false;
+            }).selectCompletedRows(self.user);
+          },
+          getUser: function () {
+            var self = this;
+            google.script.run.withSuccessHandler(function (data) {
+              //console.log(data);
+              self.user = data;
+              self.getRows();
+              self.getCompletedRows();
+            }).getUserEmail();
+          },
+          showForm: function (row) {
+            this.selectedRow = JSON.parse(JSON.stringify(row));
+            this.copyOfRow = JSON.parse(JSON.stringify(row));
+            this.rowIndex = this.workorders.indexOf(row);
+            this.showModal = true;
+          },
+          save: function () {
+            var self = this;
+
+            if (self.selectedRow.values[0][13].length !== self.selectedRow.values[0][20] && self.selectedRow.values[0][13].length > 0) {
+              self.invalidForm = true;
+              self.invalidClass["is-invalid"] = true;
+
+              console.log('error');
+            } else {
+              self.invalidForm = false;
+              self.invalidClass["is-invalid"] = false;
+
+              this.showModal = !this.showModal;
+
+              if (JSON.stringify(self.selectedRow) != JSON.stringify(self.copyOfRow)) {
+                // Remove the cycle number which is a function in the Google Sheet.
+                self.selectedRow.values[0][28] = '';
+
+                this.selectedRow.values[0][14] = moment().format('MM/DD/YY HH:mm');
+
+                // remove the selected row from workorders and put it in completed_workorders:
+                if (self.rowIndex > -1) {
+                  self.completed_workorders.push(self.selectedRow);
+                  self.workorders.splice(self.rowIndex, 1);
+                }
+                google.script.run.withSuccessHandler().updateRecord(self.selectedRow);
+              }
+            }
+          },
+        },
+      })
+    </script>
+  </body>
+</html>
